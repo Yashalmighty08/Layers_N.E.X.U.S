@@ -1,0 +1,21 @@
+Payroll Report - 2025-11-28 22:35:33
+Total Payroll: $2416.75
+--- Employee Details ---
+Sarah Smith - Hours: 35.50, Wage: $18.50, Pay: $656.75
+John Doe - Hours: 40.00, Wage: $25.00, Pay: $1000.00
+Mike Johnson - Hours: 38.00, Wage: $20.00, Pay: $760.00
+=================================
+Payroll Report - 2025-11-28 22:35:47
+Total Payroll: $2416.75
+--- Employee Details ---
+Sarah Smith - Hours: 35.50, Wage: $18.50, Pay: $656.75
+John Doe - Hours: 40.00, Wage: $25.00, Pay: $1000.00
+Mike Johnson - Hours: 38.00, Wage: $20.00, Pay: $760.00
+=================================
+Payroll Report - 2025-11-29 10:19:23
+Total Payroll: $2416.75
+--- Employee Details ---
+Sarah Smith - Hours: 35.50, Wage: $18.50, Pay: $656.75
+John Doe - Hours: 40.00, Wage: $25.00, Pay: $1000.00
+Mike Johnson - Hours: 38.00, Wage: $20.00, Pay: $760.00
+=================================
