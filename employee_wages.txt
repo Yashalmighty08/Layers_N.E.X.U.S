@@ -1,4 +1,0 @@
-employee_name,hourly_wage,weekly_salary,role
-John Doe,25.00,1000.00,Manager
-Sarah Smith,18.50,740.00,Employee
-Mike Johnson,20.00,800.00,Assistant Manager
