@@ -1,0 +1,6 @@
+Employee_Name,Wage_per_hour,Task_Description,Deadline,Priority,Status
+John_Smith,20.00,Prepare Monthly Report,2025-12-01,High,Pending!
+Emily_Johnson,18.50,Update Client Database,2025-12-05,Medium,Pending!
+Michael_Brown,22.00,Inventory Audit,2025-12-03,High,Pending!
+Sarah_Davis,19.75,Team Meeting Notes,2025-12-02,Low,Pending!
+David_Wilson,21.00,Customer Feedback Analysis,2025-12-06,Medium,Pending!
