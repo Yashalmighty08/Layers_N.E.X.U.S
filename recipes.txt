@@ -1,0 +1,8 @@
+Product Name,Flour,Sugar,Brown Sugar,Butter,Eggs,Chocolate Chips,Oats,Raisins,Peanut Butter,Vanilla,Baking Soda,Salt,coffee powder,Strawberry,BANANA,banana,sugar,corn starch
+Chocolate Chip Cookie,200,150,100,150,2,200,0,0,0,5,5,2,0,0,0,0,0,0
+Oatmeal Raisin Cookie,180,100,120,130,2,0,150,120,10,5,5,2,0,0,0,0,0,0
+Peanut Butter Cookie,180,80,60,100,1,0,0,0,200,5,4,2,0,0,0,0,0,0
+Sugar Cookie,10,180,0,150,2,0,0,0,0,10,4,2,0,0,0,0,0,0
+Choclate macadamia cookies,150,120,20,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+Strawberry cookie,20-,10,0,10,4,0,0,0,0,0,0,0,0,5,0,0,0,0
+banana cookie,10,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0

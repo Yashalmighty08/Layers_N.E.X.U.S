@@ -17,7 +17,7 @@ public class MainFrame extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1200, 800);
 
-        // Create main panel with BorderLayout
+      // Create main panel with BorderLayout
         JPanel mainPanel = new JPanel(new BorderLayout());
 
         // Create header with brand name and user info
@@ -73,7 +73,7 @@ public class MainFrame extends JFrame {
             JPanel taskManagementPanel = createPanel("Task Management");
             JPanel financePanel = new FinancePayrollPanel();
             JPanel reportingPanel = createPanel("Reporting");
-            JPanel recipePanel = createPanel("Recipe Management");
+nano MainFrame.java            JPanel recipePanel = createPanel("Recipe Management");
             JPanel inventoryPanel = createPanel("Inventory Management");
             
             tabbedPane.addTab("Task Management", taskManagementPanel);
@@ -155,5 +155,3 @@ public class MainFrame extends JFrame {
     public static void main(String[] args) {
         Security.main(args);
     }
->>>>>>> 7bfbfe121c31d505b94e237f102cc6b39966b7d2
-}
