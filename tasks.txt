@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 John_Smith,20.00,Prepare Monthly Report,2025-12-01,High,Completed
 John_Smith,20.00,Quarterly Budget Review,2025-12-10,High,Pending
 John_Smith,20.00,Organize Team Files,2025-12-15,Medium,Completed
@@ -14,3 +15,20 @@ David_Wilson,21.00,Customer Feedback Analysis,2025-12-06,Medium,Pending
 David_Wilson,21.00,Customer Satisfaction Survey Prep,2025-12-09,Medium,Completed
 David_Wilson,21.00,Compile Quarterly Support Metrics,2025-12-17,High,Pending
 
+=======
+John_Smith,20.00,Prepare Monthly Report,2025-12-01,High,Completed
+John_Smith,20.00,Quarterly Budget Review,2025-12-10,High,Pending
+John_Smith,20.00,Organize Team Files,2025-12-15,Medium,Completed
+Emily_Johnson,18.50,Update Client Database,2025-12-05,Medium,Pending
+Emily_Johnson,18.50,Data Entry Cleanup,2025-12-08,Low,Completed
+Emily_Johnson,18.50,Vendor Contact List Update,2025-12-18,Medium,Pending
+Michael_Brown,22.00,Inventory Audit,2025-12-03,High,Completed
+Michael_Brown,22.00,Warehouse Stock Reconciliation,2025-12-11,High,Pending
+Michael_Brown,22.00,Safety Compliance Check,2025-12-20,Medium,Completed
+Sarah_Davis,19.75,Team Meeting Notes,2025-12-02,Low,Completed
+Sarah_Davis,19.75,Draft Weekly Newsletter,2025-12-07,Medium,Pending
+Sarah_Davis,19.75,Assist HR With Onboarding Packets,2025-12-14,Low,Completed
+David_Wilson,21.00,Customer Feedback Analysis,2025-12-06,Medium,Pending
+David_Wilson,21.00,Customer Satisfaction Survey Prep,2025-12-09,Medium,Completed
+David_Wilson,21.00,Compile Quarterly Support Metrics,2025-12-17,High,Pending
+>>>>>>> 7bfbfe121c31d505b94e237f102cc6b39966b7d2

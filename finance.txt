@@ -1,5 +1,12 @@
+<<<<<<< HEAD
 John_Smith 20.00 38 760.00 0.00
 Emily_Johnson 18.50 42 777.00 25.00
 Michael_Brown 22.00 40 880.00 0.00
 Sarah_Davis 19.75 36 711.00 10.00
+=======
+John_Smith 20.00 38 760.00 0.00
+Emily_Johnson 18.50 42 777.00 25.00
+Michael_Brown 22.00 40 880.00 0.00
+Sarah_Davis 19.75 36 711.00 10.00
+>>>>>>> 7bfbfe121c31d505b94e237f102cc6b39966b7d2
 David_Wilson 21.00 45 945.00 0.00
