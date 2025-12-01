@@ -1,11 +1,3 @@
-<<<<<<< HEAD
 Yash raoul Employee
 JON magickiller123 Manager
 admin admin123 Manager
-Noah Star123! Manager
-Paul 123! Manager
-=======
-Yash raoul Employee
-JON magickiller123 Manager
-admin admin123 Manager
->>>>>>> 7bfbfe121c31d505b94e237f102cc6b39966b7d2
