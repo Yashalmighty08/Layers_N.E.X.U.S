@@ -9,15 +9,13 @@ public class MainFrame extends JFrame {
         this.currentUser = user;
         initializeUI();
     }
-    
-   
 
     private void initializeUI() {
         setTitle("Layers Desert Bar - Management System (" + currentUser.getRole() + ")");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1200, 800);
 
-      // Create main panel with BorderLayout
+        // Create main panel with BorderLayout
         JPanel mainPanel = new JPanel(new BorderLayout());
 
         // Create header with brand name and user info
@@ -71,10 +69,10 @@ public class MainFrame extends JFrame {
         // Role-based tabs (only for Managers)
         if (currentUser.getRole().equals("Manager")) {
             JPanel taskManagementPanel = createPanel("Task Management");
-            JPanel financePanel = new FinancePayrollPanel();
-            JPanel reportingPanel = createPanel("Reporting");
-nano MainFrame.java            JPanel recipePanel = createPanel("Recipe Management");
-            JPanel inventoryPanel = createPanel("Inventory Management");
+            JPanel financePanel = createPanel("Finance and Payroll");
+            JPanel reportingPanel = createReportPanel();
+            JPanel recipePanel = createRecipePanel(); // Changed this line
+            JPanel inventoryPanel = createInventoryPanel();
             
             tabbedPane.addTab("Task Management", taskManagementPanel);
             tabbedPane.addTab("Finance & Payroll", financePanel);
@@ -91,6 +89,27 @@ nano MainFrame.java            JPanel recipePanel = createPanel("Recipe Manageme
         }
         
         return tabbedPane;
+    }
+
+    private JPanel createInventoryPanel() {
+        InventoryManagementSystem inventorySystem = new InventoryManagementSystem();
+        return (JPanel) inventorySystem.getContentPane();
+    }
+
+    private JPanel createReportPanel() {
+        ReportingPanel reportPanel = new ReportingPanel();
+        return reportPanel; 
+}
+    
+    private JPanel createRecipePanel() {
+        // Create an instance of RecipeManagementSystem and get its content
+        RecipeManagementSystem recipeSystem = new RecipeManagementSystem();
+        JPanel recipePanel = (JPanel) recipeSystem.getContentPane();
+        
+        // Optional: Customize the panel if needed
+        recipePanel.setName("Recipe Management");
+        
+        return recipePanel;
     }
     
     private void addDisabledTab(JTabbedPane tabbedPane, String title, String tooltip) {
@@ -155,3 +174,4 @@ nano MainFrame.java            JPanel recipePanel = createPanel("Recipe Manageme
     public static void main(String[] args) {
         Security.main(args);
     }
+}
