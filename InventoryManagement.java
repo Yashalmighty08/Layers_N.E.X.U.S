@@ -9,9 +9,9 @@ import java.util.*;
 import java.util.List;
 
 public class InventoryManagement {
-    private InventoryPanel inventoryPanel;
+    private static InventoryPanel inventoryPanel;
     private DefaultTableModel tableModel;
-    private String dataFile = "inventory.txt";
+    private static String dataFile = "inventory.txt";
     private String recipeFile = "recipes.txt";
 
     public InventoryManagement(InventoryPanel panel) {
@@ -172,7 +172,7 @@ public class InventoryManagement {
         }
     }
 
-    private void saveInventoryData(Map<String, String[]> inventoryData) {
+    private static void saveInventoryData(Map<String, String[]> inventoryData) {
         try {
             PrintWriter writer = new PrintWriter(new FileWriter(dataFile));
             writer.println("Ingredient Name,Current Stock,Low Stock Threshold");
@@ -234,6 +234,42 @@ public class InventoryManagement {
             }
         });
     }
+
+    public static void addIngredientToInventory(String newIngredient) {
+    try {
+        File inventoryFile = new File("inventory.txt");
+        Map<String, String[]> inventoryData = new HashMap<>();
+        
+        if (inventoryFile.exists()) {
+            BufferedReader reader = new BufferedReader(new FileReader(inventoryFile));
+            String header = reader.readLine();
+            
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] data = line.split(",");
+                if (data.length >= 3) {
+                    String ingredient = data[0].trim().toLowerCase();
+                    if (!ingredient.equalsIgnoreCase("ingredient name")) {
+                        inventoryData.put(ingredient, new String[]{data[1].trim(), data[2].trim()});
+                    }
+                }
+            }
+            reader.close();
+        }
+        
+        String ingredientLower = newIngredient.toLowerCase();
+        if (!inventoryData.containsKey(ingredientLower)) {
+            inventoryData.put(ingredientLower, new String[]{"0", "10"});
+            
+            // Save using existing saveInventoryData method
+            // (you'd need to make saveInventoryData public or package-private)
+            saveInventoryData(inventoryData);
+        }
+        
+    } catch (IOException e) {
+        System.err.println("Error adding ingredient to inventory: " + e.getMessage());
+    }
+}
 
     // Method to update inventory when orders are placed (to be called from Order System)
     public boolean processOrder(Map<String, Integer> requiredIngredients) {
