@@ -60,60 +60,59 @@ public class RecipeManagementSystem extends JFrame {
     }
 
     private void loadRecipes() {
-        try {
-            File file = new File(dataFile);
-            if (!file.exists()) {
-                createDefaultFile();
-            }
-
-            BufferedReader reader = new BufferedReader(new FileReader(dataFile));
-            String headerLine = reader.readLine();
-            
-            if (headerLine != null) {
-                String[] headers = headerLine.split(",");
-                ingredients.clear();
-                
-                // First column is "Product Name", rest are ingredients
-                for (int i = 1; i < headers.length; i++) {
-                    ingredients.add(headers[i]);
-                }
-
-                // Create table model with index column
-                Vector<String> columnNames = new Vector<>();
-                columnNames.add("Index");
-                columnNames.add("Product Name");
-                columnNames.addAll(ingredients);
-
-                tableModel = new DefaultTableModel(columnNames, 0) {
-                    @Override
-                    public boolean isCellEditable(int row, int column) {
-                        return false; // Make table non-editable directly
-                    }
-                };
-
-                // Read recipe data
-                String line;
-                int index = 1;
-                while ((line = reader.readLine()) != null) {
-                    String[] data = line.split(",");
-                    Vector<Object> rowData = new Vector<>();
-                    rowData.add(index++); // Index number
-                    for (String value : data) {
-                        rowData.add(value);
-                    }
-                    tableModel.addRow(rowData);
-                }
-
-                recipeTable.setModel(tableModel);
-            }
-            reader.close();
-
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog(this, "Error loading recipes: " + e.getMessage(), 
-                                         "Error", JOptionPane.ERROR_MESSAGE);
+    try {
+        File file = new File(dataFile);
+        if (!file.exists()) {
+            createDefaultFile();
         }
-    }
 
+        BufferedReader reader = new BufferedReader(new FileReader(dataFile));
+        String headerLine = reader.readLine();
+        
+        if (headerLine != null) {
+            String[] headers = headerLine.split(",");
+            ingredients.clear();
+            
+            // First column is "Product Name", rest are ingredients
+            for (int i = 1; i < headers.length; i++) {
+                ingredients.add(headers[i].trim());
+            }
+            
+            // Create table model with index column
+            Vector<String> columnNames = new Vector<>();
+            columnNames.add("Index");
+            columnNames.add("Product Name");
+            columnNames.addAll(ingredients);
+
+            tableModel = new DefaultTableModel(columnNames, 0) {
+                @Override
+                public boolean isCellEditable(int row, int column) {
+                    return false;
+                }
+            };
+
+            // Read recipe data
+            String line;
+            int index = 1;
+            while ((line = reader.readLine()) != null) {
+                String[] data = line.split(",");
+                Vector<Object> rowData = new Vector<>();
+                rowData.add(index++); // Index number
+                for (String value : data) {
+                    rowData.add(value);
+                }
+                tableModel.addRow(rowData);
+            }
+
+            recipeTable.setModel(tableModel);
+        }
+        reader.close();
+
+    } catch (IOException e) {
+        JOptionPane.showMessageDialog(this, "Error loading recipes: " + e.getMessage(), 
+                                     "Error", JOptionPane.ERROR_MESSAGE);
+    }
+}
     private void createDefaultFile() {
         try {
             PrintWriter writer = new PrintWriter(new FileWriter(dataFile));
@@ -162,10 +161,10 @@ public class RecipeManagementSystem extends JFrame {
             // Create dialog for adding new recipe
             JDialog dialog = new JDialog(RecipeManagementSystem.this, "Add New Recipe", true);
             dialog.setLayout(new BorderLayout());
-            dialog.setSize(400, 300);
+            dialog.setSize(600, 600);
             dialog.setLocationRelativeTo(RecipeManagementSystem.this);
 
-            JPanel inputPanel = new JPanel(new GridLayout(ingredients.size() + 1, 2, 5, 5));
+            JPanel inputPanel = new JPanel(new GridLayout(ingredients.size() + 1, 2, 0, 0));
 
             JTextField productNameField = new JTextField();
             inputPanel.add(new JLabel("Product Name:"));
@@ -240,6 +239,33 @@ public class RecipeManagementSystem extends JFrame {
                                                                "Enter new ingredient name:");
             if (ingredientName != null && !ingredientName.trim().isEmpty()) {
                 ingredientName = ingredientName.trim();
+
+                // Check case-insensitive duplicates
+            boolean duplicateFound = false;
+            for (String existingIngredient : ingredients) {
+                if (existingIngredient.equalsIgnoreCase(ingredientName)) {
+                    duplicateFound = true;
+                    break;
+                }
+            }
+            
+            if (duplicateFound) {
+                JOptionPane.showMessageDialog(RecipeManagementSystem.this,
+                    "Ingredient '" + ingredientName + "' already exists!",
+                    "Duplicate Ingredient", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            
+            // Also check existing column names in the table
+            for (int i = 0; i < tableModel.getColumnCount(); i++) {
+                String columnName = tableModel.getColumnName(i);
+                if (columnName.equalsIgnoreCase(ingredientName)) {
+                    JOptionPane.showMessageDialog(RecipeManagementSystem.this,
+                        "Ingredient '" + ingredientName + "' already exists!",
+                        "Duplicate Ingredient", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+            }
                 
                 // Add to ingredients list
                 ingredients.add(ingredientName);

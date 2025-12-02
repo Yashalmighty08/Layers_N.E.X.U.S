@@ -110,7 +110,7 @@ public class MainFrame extends JFrame {
         recipePanel.setName("Recipe Management");
         
         return recipePanel;
-    }
+}
     
     private void addDisabledTab(JTabbedPane tabbedPane, String title, String tooltip) {
         JPanel disabledPanel = new JPanel();
@@ -174,4 +174,5 @@ public class MainFrame extends JFrame {
     public static void main(String[] args) {
         Security.main(args);
     }
+
 }
