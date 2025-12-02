@@ -1,3 +1,2 @@
-Yash raoul Employee
-JON magickiller123 Manager
-admin admin123 Manager
+Yash 1234 Employee
+Janae 123 Manager
