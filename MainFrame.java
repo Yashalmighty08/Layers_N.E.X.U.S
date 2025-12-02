@@ -4,6 +4,7 @@ import java.awt.*;
 
 public class MainFrame extends JFrame {
     private User currentUser;
+    TaskPanel taskManagementPanel = new TaskPanel();
     
     public MainFrame(User user) {
         this.currentUser = user;
@@ -68,7 +69,7 @@ public class MainFrame extends JFrame {
 
         // Role-based tabs (only for Managers)
         if (currentUser.getRole().equals("Manager")) {
-            JPanel taskManagementPanel = createPanel("Task Management");
+            JPanel taskManagementPanel = new TaskPanel();
             JPanel financePanel = createPanel("Finance and Payroll");
             JPanel reportingPanel = createReportPanel();
             JPanel recipePanel = createRecipePanel(); // Changed this line

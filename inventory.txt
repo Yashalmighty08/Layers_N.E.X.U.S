@@ -3,7 +3,7 @@ baking soda,10,2
 banana,20,10
 brown sugar,30,5
 butter,20,5
-caramel,0,10
+caramel,500,20
 chocolate chips,200,20
 coffee powder,20,10
 corn starch,0,10
