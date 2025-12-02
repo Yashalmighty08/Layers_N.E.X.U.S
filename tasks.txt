@@ -16,3 +16,5 @@ David_Wilson,21.00,Compile Quarterly Support Metrics,2025-12-17,High,Pending
 Yash raoul Employee,,,,,Pending!
 JON magickiller123 Manager,,,,,Pending!
 admin admin123 Manager,,,,,Pending!
+Yash 1234 Employee,,,,,Pending!
+Janae 123 Manager,,,,,Pending!

@@ -60,8 +60,7 @@ public class MainFrame extends JFrame {
         // Always available tabs
         JPanel homePanel = createHomePanel();
         JPanel taskAlertsPanel = createPanel("Task Alerts & Notifications");
-        JPanel orderApplicationPanel = createPanel("Order Application");
-
+        JPanel orderApplicationPanel = createOrderPanel();
         // Add always available tabs
         tabbedPane.addTab("Home", homePanel);
         tabbedPane.addTab("Task Alerts", taskAlertsPanel);
@@ -111,7 +110,14 @@ public class MainFrame extends JFrame {
         recipePanel.setName("Recipe Management");
         
         return recipePanel;
-}
+    }
+    private JPanel createOrderPanel(){
+        OrderApplicationUI orderUI = new OrderApplicationUI();
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(orderUI.getContentPane(), BorderLayout.CENTER);
+        return panel;
+    }
+
     
     private void addDisabledTab(JTabbedPane tabbedPane, String title, String tooltip) {
         JPanel disabledPanel = new JPanel();
