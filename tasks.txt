@@ -13,3 +13,6 @@ Sarah_Davis,19.75,Assist HR With Onboarding Packets,2025-12-14,Low,Completed
 David_Wilson,21.00,Customer Feedback Analysis,2025-12-06,Medium,Pending
 David_Wilson,21.00,Customer Satisfaction Survey Prep,2025-12-09,Medium,Completed
 David_Wilson,21.00,Compile Quarterly Support Metrics,2025-12-17,High,Pending
+Yash raoul Employee,,,,,Pending!
+JON magickiller123 Manager,,,,,Pending!
+admin admin123 Manager,,,,,Pending!
