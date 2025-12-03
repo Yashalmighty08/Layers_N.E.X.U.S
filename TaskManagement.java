@@ -105,7 +105,12 @@ public class TaskManagement {
      */
     private boolean containsUser(List<TaskEntry> tasks, String user) {
         for (TaskEntry t : tasks) {
-            if (t.employee.equalsIgnoreCase(user)) {
+            // Extract just the name from the employee field for comparison
+            String taskEmployeeName = t.employee;
+            if (t.employee.contains(" ")) {
+                taskEmployeeName = t.employee.split("\\s+")[0];
+            }
+            if (taskEmployeeName.equalsIgnoreCase(user)) {
                 return true;
             }
         }
@@ -116,69 +121,99 @@ public class TaskManagement {
      * Loads employee names from users.txt (one name per line).
      */
     private List<String> loadUsers() {
-        List<String> list = new ArrayList<>();
+    List<String> list = new ArrayList<>();
 
-        try (BufferedReader br = new BufferedReader(new FileReader(usersFile))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                String name = line.trim();
-                if (!name.isEmpty()) {
+    try (BufferedReader br = new BufferedReader(new FileReader(usersFile))) {
+        String line;
+        while ((line = br.readLine()) != null) {
+            String trimmedLine = line.trim();
+            if (!trimmedLine.isEmpty()) {
+                // Extract only the first part (name) before the first whitespace
+                String[] parts = trimmedLine.split("\\s+");
+                if (parts.length > 0) {
+                    String name = parts[0]; // Get just the name, not the entire line
                     list.add(name);
                 }
             }
-        } catch (Exception e) {
-            // If users.txt is missing, just return empty list.
-            e.printStackTrace();
         }
-
-        return list;
+    } catch (Exception e) {
+        // If users.txt is missing, just return empty list.
+        e.printStackTrace();
     }
 
-    /**
-     * Loads all TaskEntry rows from tasks.txt.
-     *
-     * Expected format (comma-separated):
-     * employee,wage,description,deadline,priority,status
-     */
-    private List<TaskEntry> loadExistingTasks() {
-        List<TaskEntry> list = new ArrayList<>();
+    return list;
+}
 
-        try (BufferedReader br = new BufferedReader(new FileReader(tasksFile))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                String[] arr = line.split(",");
 
-                if (arr.length < 6) {
-                    // skip malformed lines
-                    continue;
+private Map<String, String> loadWages() {
+    Map<String, String> wageMap = new HashMap<>();
+    final String financeFile = "finance.txt";
+    
+    try (BufferedReader br = new BufferedReader(new FileReader(financeFile))) {
+        String line;
+        while ((line = br.readLine()) != null) {
+            String trimmedLine = line.trim();
+            if (!trimmedLine.isEmpty()) {
+                String[] parts = trimmedLine.split("\\s+");
+                if (parts.length >= 2) {
+                    String name = parts[0];
+                    String wage = parts[1]; // Second value after first whitespace
+                    wageMap.put(name, wage);
                 }
-
-                TaskEntry entry = new TaskEntry(
-                        arr[0],
-                        arr[1],
-                        arr[2],
-                        arr[3],
-                        arr[4],
-                        arr[5]);
-                list.add(entry);
             }
-        } catch (FileNotFoundException e) {
-            // tasks.txt might not exist yet; that's okay.
-        } catch (Exception e) {
-            e.printStackTrace();
         }
+    } catch (FileNotFoundException e) {
+        System.err.println("finance.txt not found - wages will be empty");
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+    
+    return wageMap;
+}
+    
+private List<TaskEntry> loadExistingTasks() {
+    List<TaskEntry> list = new ArrayList<>();
+    Map<String, String> wageMap = loadWages();
 
-        return list;
+    try (BufferedReader br = new BufferedReader(new FileReader(tasksFile))) {
+        String line;
+        while ((line = br.readLine()) != null) {
+            String[] arr = line.split(",");
+            
+            if (arr.length < 6) {
+                // skip malformed lines
+                continue;
+            }
+
+            // Extract just the name from the first field (before first space)
+            String fullEmployeeField = arr[0].trim();
+            String employeeName = fullEmployeeField;
+            if (fullEmployeeField.contains(" ")) {
+                employeeName = fullEmployeeField.split("\\s+")[0];
+            }
+
+            String wage = arr[1].trim();
+            if (wage.isEmpty() && wageMap.containsKey(employeeName)) {
+                wage = wageMap.get(employeeName); // Use wage from finance.txt
+                }
+            
+            TaskEntry entry = new TaskEntry(
+                    employeeName,  // Use just the name, not the full field
+                    arr[1],
+                    arr[2],
+                    arr[3],
+                    arr[4],
+                    arr[5]);
+            list.add(entry);
+        }
+    } catch (FileNotFoundException e) {
+        // tasks.txt might not exist yet; that's okay.
+    } catch (Exception e) {
+        e.printStackTrace();
     }
 
-    /**
-     * Creates a new task for the given employee by APPENDING
-     * a new line to tasks.txt.
-     *
-     * - Employee and description are required.
-     * - It tries to reuse the employee's existing wage if one exists.
-     * - Status is always "Pending!" when first created.
-     */
+    return list;
+}
     public void createTask(String employee,
             String description,
             String deadline,
@@ -194,29 +229,9 @@ public class TaskManagement {
             return;
         }
 
-        // 1) Try to find an existing wage for this employee
-        String wageToUse = "";
-        try (BufferedReader br = new BufferedReader(new FileReader(tasksFile))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                String[] arr = line.split(",");
-                if (arr.length < 2)
-                    continue;
-
-                String existingEmp = arr[0].trim();
-                if (existingEmp.equalsIgnoreCase(emp)) {
-                    String existingWage = arr[1].trim();
-                    if (!existingWage.isEmpty()) {
-                        wageToUse = existingWage;
-                        break; // found one
-                    }
-                }
-            }
-        } catch (FileNotFoundException e) {
-            // tasks.txt might not exist yet – that's fine
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        
+        Map<String, String> wageMap = loadWages();
+        String wageToUse = wageMap.getOrDefault(emp, "");
 
         // 2) Append the new task row, reusing wage if we found one
         try (PrintWriter pw = new PrintWriter(new FileWriter(tasksFile, true))) {
@@ -238,14 +253,17 @@ public class TaskManagement {
      */
     public void updateStatus(String employee, String newStatus) {
         List<TaskEntry> tasks = loadTasks();
-
+        // Extract just the name from the employee parameter if it contains spaces
+        String empToFind = employee;
+        if (employee != null && employee.contains(" ")) {
+            empToFind = employee.split("\\s+")[0];
+        }
         for (TaskEntry t : tasks) {
-            if (t.employee.equalsIgnoreCase(employee)) {
+            if (t.employee.equalsIgnoreCase(empToFind)) {
                 t.status = newStatus;
                 break;
             }
         }
-
         saveTasks(tasks);
     }
 

@@ -1,439 +1,571 @@
-//Order Appllication UI
-
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.event.*;
 import java.io.*;
 import java.nio.file.*;
 import java.text.DecimalFormat;
 import java.util.*;
+import java.awt.BorderLayout;
 import java.awt.GridLayout;
-import javax.swing.BorderFactory; 
+
 public class OrderApplicationUI extends JFrame {
 
-    // --- UI MODELS & COMPONENTS ---
+    // ---------------- UI components ----------------
     private DefaultTableModel menuModel;
-    private DefaultTableModel orderModel;
-     private DefaultTableModel ordersHistoryModel;
-    private JTable menuTable, orderTable;
-    private JLabel lblCustomerID, lblTotalPrice;
-    private JTextArea lowStockArea;
-    private JPanel rightPanelOrders;
-    private JTable ordersHistoryTable;
-    private JPanel rightPanelMain;
+    private DefaultTableModel cartModel;
+    private DefaultTableModel ordersHistoryModel;
+    private JTable menuTable;
+    private JTable cartTable;
+    private JTable ordersTable;
 
-    // --- DATA STRUCTURES ---
-    private Map<String, Recipe> recipes = new LinkedHashMap<>();
-    private Map<String, InventoryItem> inventory = new LinkedHashMap<>();
+    private JLabel lblCustomer;
+    private JLabel lblTotal;
+    private JTextArea lowStockText;
+
+    // Panels
+    private JPanel mainRightPanel;
+    private JPanel ordersPanel;
+
+    // ---------------- data ----------------
+    // Keep names simple
+    private Map<String, Recipe> recipeMap = new LinkedHashMap<>();
+    private Map<String, InventoryItem> inventoryMap = new LinkedHashMap<>();
+    private Map<String, Double> priceMap = new LinkedHashMap<>();
+
     private DecimalFormat fmt = new DecimalFormat("#0.00");
 
-    // --- FILES ---
+    // files
     private static final Path RECIPES_FILE = Paths.get("recipes.txt");
     private static final Path INVENTORY_FILE = Paths.get("inventory.txt");
     private static final Path ORDERS_FILE = Paths.get("orders.txt");
+    private static final Path PRICES_FILE = Paths.get("prices.txt");
 
-   
     public OrderApplicationUI() {
-        setTitle("Order Application");
+        setTitle("Order Application - Beginner Version");
         setSize(1000, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        setupUI();   // Build all UI components
+        buildUI();
+        // load data in a simple order
         loadRecipes();
+        loadPrices();
         loadInventory();
-        loadMenu();
-        updateTotal();
+        loadMenuTable();
+        updateTotalLabel();
     }
 
-    // ---------------------------------------------------------
-    // BUILD UI
-    // ---------------------------------------------------------
-    private void setupUI() {
+    // ---------------- UI BUILD ----------------
+    private void buildUI() {
         setLayout(new BorderLayout());
         JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
         split.setDividerLocation(420);
-        add(split);
+        add(split, BorderLayout.CENTER);
 
-        // LEFT PANEL (MENU)
+        // LEFT: menu list and add button
         JPanel left = new JPanel(new BorderLayout());
         left.setBorder(BorderFactory.createTitledBorder("Menu Browser"));
-
         menuModel = new DefaultTableModel(new String[]{"Product", "Price"}, 0) {
             public boolean isCellEditable(int r, int c) { return false; }
         };
         menuTable = new JTable(menuModel);
         left.add(new JScrollPane(menuTable), BorderLayout.CENTER);
 
-        JButton addToCart = new JButton("Add to Cart");
-        addToCart.addActionListener(e -> addMenuItemToOrder());
-        left.add(addToCart, BorderLayout.SOUTH);
-        split.setLeftComponent(left);
+        JButton addBtn = new JButton("Add to Cart");
+        addBtn.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                addSelectedMenuToCart();
+            }
+        });
+        left.add(addBtn, BorderLayout.SOUTH);
 
-        // RIGHT PANEL (ORDER SUMMARY)
+        // RIGHT: cart and order controls
         JPanel right = new JPanel(new BorderLayout());
         right.setBorder(BorderFactory.createTitledBorder("Order Summary"));
 
-        orderModel = new DefaultTableModel(new String[]{"Product", "Qty", "Price"}, 0) {
+        cartModel = new DefaultTableModel(new String[]{"Product", "Qty", "Price"}, 0) {
             public boolean isCellEditable(int r, int c) { return false; }
         };
-        orderTable = new JTable(orderModel);
-        right.add(new JScrollPane(orderTable), BorderLayout.CENTER);
+        cartTable = new JTable(cartModel);
+        right.add(new JScrollPane(cartTable), BorderLayout.CENTER);
 
-        JPanel controls = new JPanel();
-        JButton rmBtn = new JButton("Remove Item");     rmBtn.addActionListener(e -> removeOrderItem());
-        JButton qtyBtn = new JButton("Update Quantity"); qtyBtn.addActionListener(e -> updateQuantity());
-        JButton priceBtn = new JButton("Update Price");  priceBtn.addActionListener(e -> updateMenuPrice());
+        // simple top controls (remove, qty, price)
+        JPanel topControls = new JPanel();
+        JButton removeBtn = new JButton("Remove Item");
+        removeBtn.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e){ removeCartItem(); }});
+        JButton qtyBtn = new JButton("Update Quantity");
+        qtyBtn.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e){ updateCartQuantity(); }});
+        JButton priceBtn = new JButton("Update Price");
+        priceBtn.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e){ updateMenuPrice(); }});
+        topControls.add(removeBtn); topControls.add(qtyBtn); topControls.add(priceBtn);
+        right.add(topControls, BorderLayout.NORTH);
 
-        controls.add(rmBtn); controls.add(qtyBtn); controls.add(priceBtn);
-        right.add(controls, BorderLayout.NORTH);
-
-        // LOWER RIGHT PANEL
+        // bottom area: order details, low stock, actions
         JPanel bottom = new JPanel();
         bottom.setLayout(new BoxLayout(bottom, BoxLayout.Y_AXIS));
 
-        JPanel details = new JPanel(new GridLayout(2, 2));
+        JPanel details = new JPanel(new GridLayout(2,2));
         details.setBorder(BorderFactory.createTitledBorder("Order Details"));
-        lblCustomerID = new JLabel("---");
-        lblTotalPrice = new JLabel("$0.00");
-        details.add(new JLabel("Customer ID:")); details.add(lblCustomerID);
-        details.add(new JLabel("Total Price:")); details.add(lblTotalPrice);
+        details.add(new JLabel("Customer ID:"));
+        lblCustomer = new JLabel("---");
+        details.add(lblCustomer);
+        details.add(new JLabel("Total Price:"));
+        lblTotal = new JLabel("$0.00");
+        details.add(lblTotal);
         bottom.add(details);
 
         JPanel low = new JPanel(new BorderLayout());
         low.setBorder(BorderFactory.createTitledBorder("Low Stock Alert"));
-        lowStockArea = new JTextArea(5, 20);
-        lowStockArea.setEditable(false);
-        lowStockArea.setText("Low:\nNone");
-        low.add(new JScrollPane(lowStockArea), BorderLayout.CENTER);
+        lowStockText = new JTextArea(5, 20);
+        lowStockText.setEditable(false);
+        lowStockText.setText("Low:\nNone");
+        low.add(new JScrollPane(lowStockText), BorderLayout.CENTER);
         bottom.add(low);
 
         JPanel actions = new JPanel();
-        JButton placeOrder = new JButton("Place Order"); placeOrder.addActionListener(e -> placeOrder());
-        JButton viewOrders = new JButton("View Orders");     viewOrders.addActionListener(e -> showOrdersPanel());
-        actions.add(placeOrder); actions.add(viewOrders);
+        JButton placeBtn = new JButton("Place Order");
+        placeBtn.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e){ placeOrder(); }});
+        JButton viewOrdersBtn = new JButton("View Orders");
+        viewOrdersBtn.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e){ showOrdersScreen(); }});
+        actions.add(placeBtn); actions.add(viewOrdersBtn);
         bottom.add(actions);
 
         right.add(bottom, BorderLayout.SOUTH);
+
+        split.setLeftComponent(left);
         split.setRightComponent(right);
-        rightPanelMain = right;
+        mainRightPanel = right;
     }
 
-    // ---------------------------------------------------------
-    // LOAD FILES
-    // ---------------------------------------------------------
-    private void loadRecipes() {
-        recipes.clear();
-        if (!Files.exists(RECIPES_FILE)) return;
+    // ---------------- LOAD FILES ----------------
+    // Very simple parsing, beginner-friendly style
 
+    private void loadRecipes() {
+        recipeMap.clear();
+        if (!Files.exists(RECIPES_FILE)) {
+            // no recipes file - nothing to do
+            return;
+        }
         try (BufferedReader br = Files.newBufferedReader(RECIPES_FILE)) {
             String header = br.readLine();
             if (header == null) return;
+
+            // header like: Product,ing1,ing2,...
             String[] cols = header.split(",");
-            List<String> ingNames = new ArrayList<>();
-            for (int i = 1; i < cols.length; i++) ingNames.add(cols[i].trim().toLowerCase());
+            List<String> ingredientNames = new ArrayList<>();
+            for (int i = 1; i < cols.length; i++) {
+                ingredientNames.add(cols[i].trim().toLowerCase());
+            }
 
             String line;
             while ((line = br.readLine()) != null) {
-                String[] p = line.split(",");
-                if (p.length == 0) continue;
-                Recipe r = new Recipe(p[0]);
-                for (int i = 1; i < p.length && i - 1 < ingNames.size(); i++) {
-                    r.ingredients.put(ingNames.get(i - 1), parseInt(p[i]));
+                if (line.trim().isEmpty()) continue;
+                String[] parts = line.split(",");
+                String product = parts[0].trim();
+                Recipe r = new Recipe(product);
+                for (int i = 1; i < parts.length && i - 1 < ingredientNames.size(); i++) {
+                    int amt = safeParseInt(parts[i]);
+                    r.ingredients.put(ingredientNames.get(i - 1), amt);
                 }
-                recipes.put(r.name, r);
+                recipeMap.put(product, r);
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            // beginner style: print stack for debugging
+            e.printStackTrace();
+        }
     }
 
     private void loadInventory() {
-        inventory.clear();
+        inventoryMap.clear();
         if (!Files.exists(INVENTORY_FILE)) return;
-
         try (BufferedReader br = Files.newBufferedReader(INVENTORY_FILE)) {
-            br.readLine(); // skip header
+            String header = br.readLine(); // skip header if present
             String line;
             while ((line = br.readLine()) != null) {
+                if (line.trim().isEmpty()) continue;
                 String[] p = line.split(",");
                 if (p.length < 3) continue;
                 String name = p[0].trim().toLowerCase();
-                inventory.put(name, new InventoryItem(name, parseInt(p[1]), parseInt(p[2])));
+                int stock = safeParseInt(p[1]);
+                int low = safeParseInt(p[2]);
+                inventoryMap.put(name, new InventoryItem(name, stock, low));
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
-    private void loadMenu() {
+    // Prices: simpler approach - create file if missing, ensure every recipe has a price entry
+    private void loadPrices() {
+        priceMap.clear();
+
+        if (!Files.exists(PRICES_FILE)) {
+            // create file with defaults (0.00)
+            try {
+                List<String> lines = new ArrayList<>();
+                lines.add("Product,Price");
+                for (String prod : recipeMap.keySet()) {
+                    lines.add(prod + ",0.00");
+                    priceMap.put(prod, 0.00);
+                }
+                Files.write(PRICES_FILE, lines);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return;
+        }
+
+        try (BufferedReader br = Files.newBufferedReader(PRICES_FILE)) {
+            String header = br.readLine(); // skip header
+            String line;
+            while ((line = br.readLine()) != null) {
+                if (line.trim().isEmpty()) continue;
+                String[] p = line.split(",");
+                if (p.length < 2) continue;
+                String prod = p[0].trim();
+                double price = safeParseDouble(p[1]);
+                priceMap.put(prod, price);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // Ensure all recipes have a price entry (default 0.00)
+        for (String prod : recipeMap.keySet()) {
+            if (!priceMap.containsKey(prod)) {
+                priceMap.put(prod, 0.00);
+            }
+        }
+
+        // If some products were missing in file, rewrite to include them
+        try {
+            List<String> fileLines = Files.exists(PRICES_FILE) ? Files.readAllLines(PRICES_FILE) : new ArrayList<>();
+            if (fileLines.size() - 1 < recipeMap.size()) {
+                savePrices();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void loadMenuTable() {
         menuModel.setRowCount(0);
-        for (String prod : recipes.keySet()) menuModel.addRow(new Object[]{prod, "$0.00"});
+        for (String prod : recipeMap.keySet()) {
+            double p = priceMap.getOrDefault(prod, 0.00);
+            menuModel.addRow(new Object[]{prod, "$" + fmt.format(p)});
+        }
     }
 
-    // ---------------------------------------------------------
-    // ORDER ACTIONS
-    // ---------------------------------------------------------
-    private void addMenuItemToOrder() {
+    // ---------------- SAVE prices ----------------
+    private void savePrices() {
+        try {
+            List<String> lines = new ArrayList<>();
+            lines.add("Product,Price");
+            for (String prod : priceMap.keySet()) {
+                lines.add(prod + "," + fmt.format(priceMap.get(prod)));
+            }
+            Files.write(PRICES_FILE, lines);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // ---------------- CART ACTIONS ----------------
+    private void addSelectedMenuToCart() {
         int row = menuTable.getSelectedRow();
         if (row < 0) {
             JOptionPane.showMessageDialog(this, "Select a product first.");
             return;
         }
         String product = (String) menuModel.getValueAt(row, 0);
-        double price  = parseDouble((String) menuModel.getValueAt(row, 1));
+        String priceStr = (String) menuModel.getValueAt(row, 1);
+        double price = safeParseDouble(priceStr);
 
-        // If product already exists, increase quantity
-        for (int i = 0; i < orderModel.getRowCount(); i++) {
-            if (orderModel.getValueAt(i, 0).equals(product)) {
-                int q = (int) orderModel.getValueAt(i, 1);
-                orderModel.setValueAt(q + 1, i, 1);
-                updateTotal();
+        // If exists in cart, increment qty
+        for (int i = 0; i < cartModel.getRowCount(); i++) {
+            if (cartModel.getValueAt(i, 0).equals(product)) {
+                int q = (int) cartModel.getValueAt(i, 1);
+                cartModel.setValueAt(q + 1, i, 1);
+                updateTotalLabel();
                 return;
             }
         }
-        orderModel.addRow(new Object[]{product, 1, "$" + fmt.format(price)});
-        updateTotal();
+
+        cartModel.addRow(new Object[]{product, 1, "$" + fmt.format(price)});
+        updateTotalLabel();
     }
 
-    private void removeOrderItem() {
-        int row = orderTable.getSelectedRow();
+    private void removeCartItem() {
+        int row = cartTable.getSelectedRow();
         if (row >= 0) {
-            orderModel.removeRow(row);
-            updateTotal();
+            cartModel.removeRow(row);
+            updateTotalLabel();
         }
     }
 
-    private void updateQuantity() {
-        int row = orderTable.getSelectedRow();
+    private void updateCartQuantity() {
+        int row = cartTable.getSelectedRow();
         if (row < 0) return;
-
-        String name = (String) orderModel.getValueAt(row, 0);
-        int curr = (int) orderModel.getValueAt(row, 1);
-        String s = JOptionPane.showInputDialog(this, "Quantity for " + name + ":", curr);
+        String prod = (String) cartModel.getValueAt(row, 0);
+        int curr = (int) cartModel.getValueAt(row, 1);
+        String s = JOptionPane.showInputDialog(this, "Quantity for " + prod + ":", curr);
         if (s == null) return;
-
         try {
             int q = Integer.parseInt(s.trim());
             if (q > 0) {
-                orderModel.setValueAt(q, row, 1);
-                updateTotal();
+                cartModel.setValueAt(q, row, 1);
+                updateTotalLabel();
+            } else {
+                // ignore zero or negative
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            // ignore parse errors
+        }
     }
 
+    // Update menu price: simple dialog and save
     private void updateMenuPrice() {
         int row = menuTable.getSelectedRow();
         if (row < 0) return;
-
-        String product = (String) menuModel.getValueAt(row, 0);
-        String s = JOptionPane.showInputDialog(this, "New price for " + product + ":", "0.00");
+        String prod = (String) menuModel.getValueAt(row, 0);
+        double cur = priceMap.getOrDefault(prod, 0.00);
+        String s = JOptionPane.showInputDialog(this, "New price for " + prod + ":", fmt.format(cur));
         if (s == null) return;
-
         try {
             double p = Double.parseDouble(s.trim());
+            priceMap.put(prod, p);
             menuModel.setValueAt("$" + fmt.format(p), row, 1);
-            updateTotal();
-        } catch (Exception ignored) {}
+            savePrices();
+            updateTotalLabel();
+        } catch (Exception e) {
+            // ignore
+        }
     }
 
-    private void cancelOrder() {
-        orderModel.setRowCount(0);
-        lblCustomerID.setText("---");
-        lblTotalPrice.setText("$0.00");
-        lowStockArea.setText("Low:\nNone");
+    private void cancelCart() {
+        cartModel.setRowCount(0);
+        lblCustomer.setText("---");
+        lblTotal.setText("$0.00");
+        lowStockText.setText("Low:\nNone");
     }
 
+    // ---------------- PLACE ORDER ----------------
     private void placeOrder() {
-        if (orderModel.getRowCount() == 0) {
+        if (cartModel.getRowCount() == 0) {
             JOptionPane.showMessageDialog(this, "Order is empty.");
             return;
         }
 
+        // build order items map product->qty and compute total price
         Map<String, Integer> orderItems = new LinkedHashMap<>();
         double total = 0;
-        for (int i = 0; i < orderModel.getRowCount(); i++) {
-            String prod = (String) orderModel.getValueAt(i, 0);
-            int qty = (int) orderModel.getValueAt(i, 1);
-            double price = parseDouble((String) orderModel.getValueAt(i, 2));
+        for (int i = 0; i < cartModel.getRowCount(); i++) {
+            String prod = (String) cartModel.getValueAt(i, 0);
+            int qty = (int) cartModel.getValueAt(i, 1);
+            double price = safeParseDouble((String) cartModel.getValueAt(i, 2));
             orderItems.put(prod, qty);
-            total += qty * price;
+            total += price * qty;
         }
 
-        // Compute ingredients required
-        Map<String, Integer> needed = computeNeeds(orderItems);
+        // compute needed ingredients
+        Map<String, Integer> needed = computeNeededIngredients(orderItems);
+
+        // check inventory - build low and insufficient lists
         List<String> lowList = new ArrayList<>();
         List<String> insufficient = new ArrayList<>();
 
         for (String ing : needed.keySet()) {
             int req = needed.get(ing);
-            InventoryItem item = inventory.get(ing);
-            if (item == null || item.stock < req) {
+            InventoryItem inv = inventoryMap.get(ing);
+            if (inv == null || inv.stock <= 0 || inv.stock < req) {
                 insufficient.add(ing);
-            } else if (item.stock - req < item.low) {
+            } else if (inv.stock - req < inv.low) {
                 lowList.add(ing);
             }
         }
+        
+        // STOP ORDER if anything is low or insufficient
+        if (!insufficient.isEmpty() || !lowList.isEmpty()) {
+            StringBuilder msg = new StringBuilder("Order cannot be placed due to stock issues:\n\n");
 
-        // Display low/insufficient
-        StringBuilder sb = new StringBuilder("Low:\n");
-        if (lowList.isEmpty() && insufficient.isEmpty()) sb.append("None");
-        else {
-            insufficient.forEach(x -> sb.append("- Insufficient: ").append(x).append("\n"));
-            lowList.forEach(x -> sb.append("- Low: ").append(x).append("\n"));
+        for (String s : insufficient) {
+            msg.append("Insufficient stock: ").append(s).append("\n");
         }
-        lowStockArea.setText(sb.toString());
 
-        if (JOptionPane.showConfirmDialog(this, "Place order?", "Confirm", JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION)
-            return;
+        for (String s : lowList) {
+            msg.append("⚠ Low stock limit reached: ").append(s).append("\n");
+        }
 
-        String id = generateID();
-        lblCustomerID.setText(id);
-        lblTotalPrice.setText("$" + fmt.format(total));
+        JOptionPane.showMessageDialog(this, msg.toString(), "Order Denied", JOptionPane.ERROR_MESSAGE);
+        return;  
+        }
 
+
+        // display low/insufficient in text area
+        StringBuilder sb = new StringBuilder("Low:\n");
+        if (lowList.isEmpty() && insufficient.isEmpty()) {
+            sb.append("None");
+        } else {
+            for (String s : insufficient) {
+                sb.append("- Insufficient: ").append(s).append("\n");
+            }
+            for (String s : lowList) {
+                sb.append("- Low: ").append(s).append("\n");
+            }
+        }
+        lowStockText.setText(sb.toString());
+
+        int confirm = JOptionPane.showConfirmDialog(this, "Place order?", "Confirm", JOptionPane.YES_NO_OPTION);
+        if (confirm != JOptionPane.YES_OPTION) return;
+
+        String id = generateCustomerID();
+        lblCustomer.setText(id);
+        lblTotal.setText("$" + fmt.format(total));
+
+        // save order, deduct inventory, save files
         saveOrder(id, orderItems, total);
         deductInventory(needed);
         saveInventory();
 
         JOptionPane.showMessageDialog(this, "Order placed! ID: " + id);
-        cancelOrder();
+        cancelCart();
     }
-    
+
+    // ---------------- ORDERS SCREEN ----------------
     private void buildOrdersPanel() {
-        rightPanelOrders= new JPanel(new BorderLayout());
-        rightPanelOrders.setBorder(BorderFactory.createTitledBorder("Order Summary"));
+        ordersPanel = new JPanel(new BorderLayout());
+        ordersPanel.setBorder(BorderFactory.createTitledBorder("Order Summary"));
 
         ordersHistoryModel = new DefaultTableModel(new String[]{"Customer ID", "Product", "Qty", "Total Price"}, 0) {
             public boolean isCellEditable(int r, int c) { return false; }
         };
+        ordersTable = new JTable(ordersHistoryModel);
+        ordersPanel.add(new JScrollPane(ordersTable), BorderLayout.CENTER);
 
-        ordersHistoryTable= new JTable(ordersHistoryModel);
-        rightPanelOrders.add(new JScrollPane(ordersHistoryTable), BorderLayout.CENTER);
+        JButton cancelOrderBtn = new JButton("Cancel Order");
+        JButton backBtn = new JButton("Return");
+        cancelOrderBtn.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e){ cancelSelectedOrder(); }});
+        backBtn.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e){ returnToMain(); }});
 
-        JButton cancel = new JButton("Cancel Order");
-        JButton back = new JButton("Return");
-
-        cancel.addActionListener(e -> cancelSelectedOrder());
-        back.addActionListener(e -> returnToMainPanel());
-
-        JPanel bottom = new JPanel();
-        bottom.add(cancel);
-        bottom.add(back);
-        rightPanelOrders.add(bottom, BorderLayout.SOUTH);
+        JPanel bot = new JPanel();
+        bot.add(cancelOrderBtn); bot.add(backBtn);
+        ordersPanel.add(bot, BorderLayout.SOUTH);
     }
-    
-     private void showOrdersPanel() {
+
+    private void showOrdersScreen() {
         buildOrdersPanel();
         loadOrdersIntoTable();
-        JSplitPane split = (JSplitPane)getContentPane().getComponent(0);
-        split.setRightComponent(rightPanelOrders);
+        JSplitPane split = (JSplitPane) getContentPane().getComponent(0);
+        split.setRightComponent(ordersPanel);
     }
-    
-    private void returnToMainPanel() {
-        JSplitPane split = (JSplitPane)getContentPane().getComponent(0);
-        split.setRightComponent(rightPanelMain);
+
+    private void returnToMain() {
+        JSplitPane split = (JSplitPane) getContentPane().getComponent(0);
+        split.setRightComponent(mainRightPanel);
     }
-    
-        private void loadOrdersIntoTable() {
+
+    private void loadOrdersIntoTable() {
         ordersHistoryModel.setRowCount(0);
+        if (!Files.exists(ORDERS_FILE)) return;
         try {
             List<String> lines = Files.readAllLines(ORDERS_FILE);
             for (String line : lines) {
+                if (line.trim().isEmpty()) continue;
                 String[] p = line.split(",");
                 if (p.length < 3) continue;
-
                 String id = p[0];
                 String items = p[1];
                 String total = p[2];
 
+                // items are product:qty|product2:qty2
                 String[] parts = items.split("\\|");
-                for (String item : parts) {
-                    String[] kv = item.split(":");
+                for (String it : parts) {
+                    String[] kv = it.split(":");
                     if (kv.length == 2) {
                         ordersHistoryModel.addRow(new Object[]{id, kv[0], kv[1], "$" + total});
                     }
                 }
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
-    
-        private void cancelSelectedOrder() {
-        int row = ordersHistoryTable.getSelectedRow();
+
+    // Cancel selected order (remove from file), restore inventory only if status was Incomplete
+    private void cancelSelectedOrder() {
+        int row = ordersTable.getSelectedRow();
         if (row < 0) {
             JOptionPane.showMessageDialog(this, "Select an order.");
             return;
         }
-
         String id = (String) ordersHistoryModel.getValueAt(row, 0);
 
         try {
             List<String> lines = Files.readAllLines(ORDERS_FILE);
-            List<String> updated = new ArrayList<>();
-
+            List<String> keep = new ArrayList<>();
             for (String line : lines) {
                 if (line.startsWith(id + ",")) {
-                    restoreInventoryFromOrder(line);
+                    // restore inventory based on this line
+                    restoreInventoryFromOrderLine(line);
+                    // skip adding this line to keep -> effectively delete it
                     continue;
+                } else {
+                    keep.add(line);
                 }
-                updated.add(line);
             }
-
-            Files.write(ORDERS_FILE, updated);
+            Files.write(ORDERS_FILE, keep);
             loadOrdersIntoTable();
             JOptionPane.showMessageDialog(this, "Order canceled.");
-
-        } catch (Exception ignored) {}
-    }
-    
-private void restoreInventoryFromOrder(String line) {
-    try {
-        String[] p = line.split(",");
-        if (p.length < 4) return;
-
-        String items = p[1];
-        String status = p[3].trim();
-
-        // Only restore inventory if order was incomplete
-        if (!status.equalsIgnoreCase("Incomplete")) {
-            return;
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+    }
 
-        for (String item : items.split("\\|")) {
-            String[] kv = item.split(":");
-            if (kv.length != 2) continue;
+    private void restoreInventoryFromOrderLine(String line) {
+        try {
+            // Expected format: id,product:qty|p2:qty2,total,status
+            String[] p = line.split(",");
+            if (p.length < 4) return;
+            String items = p[1];
+            String status = p[3].trim();
+            // Only add back inventory if status is Incomplete
+            if (!status.equalsIgnoreCase("Incomplete")) return;
 
-            String productName = kv[0];
-            int qty = Integer.parseInt(kv[1]);
-
-            Recipe r = recipes.get(productName);
-            if (r == null) continue;
-
-            // Restore ingredients used by this product
-            for (String ing : r.ingredients.keySet()) {
-                InventoryItem inv = inventory.get(ing);
-                if (inv != null) {
-                    inv.stock += r.ingredients.get(ing) * qty;
+            String[] parts = items.split("\\|");
+            for (String it : parts) {
+                String[] kv = it.split(":");
+                if (kv.length != 2) continue;
+                String productName = kv[0];
+                int qty = safeParseInt(kv[1]);
+                Recipe r = recipeMap.get(productName);
+                if (r == null) continue;
+                for (String ing : r.ingredients.keySet()) {
+                    int used = r.ingredients.get(ing) * qty;
+                    InventoryItem inv = inventoryMap.get(ing);
+                    if (inv != null) {
+                        inv.stock += used;
+                    }
                 }
             }
+            saveInventory();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+    }
 
-        saveInventory();
+    // ---------------- HELPERS (logic) ----------------
 
-    } catch (Exception ignored) {}
-}
-
-
-    // ---------------------------------------------------------
-    // HELPERS
-    // ---------------------------------------------------------
-    private Map<String, Integer> computeNeeds(Map<String, Integer> items) {
+    // Compute all ingredient needs for the order
+    private Map<String, Integer> computeNeededIngredients(Map<String, Integer> items) {
         Map<String, Integer> req = new HashMap<>();
         for (String prod : items.keySet()) {
-            Recipe r = recipes.get(prod);
+            Recipe r = recipeMap.get(prod);
             if (r == null) continue;
-            int qty = items.get(prod);
+            int q = items.get(prod);
             for (String ing : r.ingredients.keySet()) {
-                int amount = r.ingredients.get(ing) * qty;
-                req.put(ing, req.getOrDefault(ing, 0) + amount);
+                int amt = r.ingredients.get(ing) * q;
+                int cur = req.containsKey(ing) ? req.get(ing) : 0;
+                req.put(ing, cur + amt);
             }
         }
         return req;
@@ -443,23 +575,26 @@ private void restoreInventoryFromOrder(String line) {
         try {
             StringBuilder sb = new StringBuilder();
             sb.append(id).append(",");
-
             boolean first = true;
             for (String p : items.keySet()) {
                 if (!first) sb.append("|");
-                sb.append(p).append(":" + items.get(p));
+                sb.append(p).append(":").append(items.get(p));
                 first = false;
             }
-
-            sb.append(",").append(fmt.format(total)).append(",Incomplete\n");
+            sb.append(",").append(fmt.format(total)).append(",Incomplete");
+            sb.append("\n");
             Files.write(ORDERS_FILE, sb.toString().getBytes(), StandardOpenOption.CREATE, StandardOpenOption.APPEND);
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private void deductInventory(Map<String, Integer> needed) {
         for (String ing : needed.keySet()) {
-            InventoryItem it = inventory.get(ing);
-            if (it != null) it.stock -= needed.get(ing);
+            InventoryItem inv = inventoryMap.get(ing);
+            if (inv != null) {
+                inv.stock -= needed.get(ing);
+            }
         }
     }
 
@@ -467,47 +602,58 @@ private void restoreInventoryFromOrder(String line) {
         try {
             List<String> lines = new ArrayList<>();
             lines.add("Ingredient,Stock,Low");
-            for (String ing : inventory.keySet()) {
-                InventoryItem it = inventory.get(ing);
+            for (String ing : inventoryMap.keySet()) {
+                InventoryItem it = inventoryMap.get(ing);
                 lines.add(it.name + "," + it.stock + "," + it.low);
             }
             Files.write(INVENTORY_FILE, lines);
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
-    private int parseInt(String s) {
+    // ---------------- small helpers ----------------
+    private int safeParseInt(String s) {
         try {
-            return Integer.parseInt(s.trim()); 
-        } 
-        catch (Exception e) { return 0; }
-    }
-    
-    private double parseDouble(String s) {
-        try { return Double.parseDouble(s.replace("$", "").trim()); } catch (Exception e) { return 0; }
+            return Integer.parseInt(s.trim());
+        } catch (Exception e) {
+            return 0;
+        }
     }
 
-    private String generateID() {
+    private double safeParseDouble(String s) {
+        try {
+            String t = s.replace("$", "").trim();
+            return Double.parseDouble(t);
+        } catch (Exception e) {
+            return 0.0;
+        }
+    }
+
+    private String generateCustomerID() {
         int count = 1;
         try {
-            List<String> all = Files.readAllLines(ORDERS_FILE);
-            count = all.size() + 1;
-        } catch (Exception ignored) {}
+            if (Files.exists(ORDERS_FILE)) {
+                List<String> all = Files.readAllLines(ORDERS_FILE);
+                count = all.size() + 1;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return String.format("C%04d", count);
     }
 
-    private void updateTotal() {
+    private void updateTotalLabel() {
         double total = 0;
-        for (int i = 0; i < orderModel.getRowCount(); i++) {
-            double price = parseDouble((String) orderModel.getValueAt(i, 2));
-            int qty = (int) orderModel.getValueAt(i, 1);
+        for (int i = 0; i < cartModel.getRowCount(); i++) {
+            double price = safeParseDouble((String) cartModel.getValueAt(i, 2));
+            int qty = (int) cartModel.getValueAt(i, 1);
             total += price * qty;
         }
-        lblTotalPrice.setText("$" + fmt.format(total));
+        lblTotal.setText("$" + fmt.format(total));
     }
 
-    // ---------------------------------------------------------
-    // DATA CLASSES
-    // ---------------------------------------------------------
+    // ---------------- data classes ----------------
     private static class Recipe {
         String name;
         Map<String, Integer> ingredients = new LinkedHashMap<>();
@@ -516,12 +662,17 @@ private void restoreInventoryFromOrder(String line) {
 
     private static class InventoryItem {
         String name;
-        int stock, low;
+        int stock;
+        int low;
         InventoryItem(String n, int s, int l) { name = n; stock = s; low = l; }
     }
 
-    // ---------------------------------------------------------
+    // ---------------- main ----------------
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new OrderApplicationUI().setVisible(true));
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                new OrderApplicationUI().setVisible(true);
+            }
+        });
     }
 }

@@ -116,6 +116,9 @@ public class MainFrame extends JFrame {
         JPanel panel = new JPanel(new BorderLayout());
         panel.add(orderUI.getContentPane(), BorderLayout.CENTER);
         return panel;
+        
+        
+
     }
 
     private JPanel createFinancePanel(){

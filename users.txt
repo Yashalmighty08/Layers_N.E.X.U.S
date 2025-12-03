@@ -1,2 +1,6 @@
 Yash 1234 Employee
+cheznay 1 Employee
+rommona 2 Employee
+jordan 1 Employee
+jonathon 1 Employee
 Janae 123 Manager
