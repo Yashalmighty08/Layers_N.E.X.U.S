@@ -69,7 +69,7 @@ public class MainFrame extends JFrame {
         // Role-based tabs (only for Managers)
         if (currentUser.getRole().equals("Manager")) {
             JPanel taskManagementPanel = new TaskPanel();
-            JPanel financePanel = createPanel("Finance and Payroll");
+            JPanel financePanel = createFinancePanel();
             JPanel reportingPanel = createReportPanel();
             JPanel recipePanel = createRecipePanel(); // Changed this line
             JPanel inventoryPanel = createInventoryPanel();
@@ -118,7 +118,10 @@ public class MainFrame extends JFrame {
         return panel;
     }
 
-    
+    private JPanel createFinancePanel(){
+        FinancePanel financepanel = new FinancePanel();
+        return financepanel;
+    }
     private void addDisabledTab(JTabbedPane tabbedPane, String title, String tooltip) {
         JPanel disabledPanel = new JPanel();
         disabledPanel.setBackground(Color.LIGHT_GRAY);
