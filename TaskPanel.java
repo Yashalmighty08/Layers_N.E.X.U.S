@@ -1,4 +1,5 @@
 import javax.swing.*;
+import javax.swing.event.TableModelEvent;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.*;
@@ -336,100 +337,133 @@ public class TaskPanel extends JPanel {
     // ---------- View & Delete Tasks dialog ----------
 
     private void openViewTasksDialog() {
-        int row = table.getSelectedRow();
-        if (row < 0) {
+    int row = table.getSelectedRow();
+    if (row < 0) {
+        JOptionPane.showMessageDialog(
+                this,
+                "Please select an employee row first.",
+                "No Selection",
+                JOptionPane.WARNING_MESSAGE);
+        return;
+    }
+
+    String employee = (String) model.getValueAt(row, 0);
+    if (employee == null)
+        return;
+    String empKey = employee.trim();
+
+    DefaultTableModel detailModel = new DefaultTableModel(
+            new Object[] { "Employee", "Wage", "Task", "Deadline", "Priority", "Status" },
+            0) {
+        @Override
+        public boolean isCellEditable(int row, int column) {
+            return column == 5;  // Only Status column editable
+        }
+    };
+
+    JTable detailTable = new JTable(detailModel);
+    detailTable.setRowHeight(22);
+
+    // Add dropdown for Status column
+    JComboBox<String> statusCombo = new JComboBox<>(new String[]{
+        "Pending!", "Pending", "In Progress", "Completed"
+    });
+    detailTable.getColumnModel().getColumn(5).setCellEditor(new DefaultCellEditor(statusCombo));
+
+    JScrollPane scrollPane = new JScrollPane(detailTable);
+
+    // Mapping: detail row index -> index in full task list
+    java.util.List<Integer> rowToIndex = new ArrayList<>();
+    populateEmployeeTasks(empKey, detailModel, rowToIndex);
+
+    // Add listener to save status changes
+    detailModel.addTableModelListener(e -> {
+        if (e.getType() == TableModelEvent.UPDATE) {
+            int rowIdx = e.getFirstRow();
+            int column = e.getColumn();
+            
+            if (column == 5) {
+                int taskIndex = rowToIndex.get(rowIdx);
+                List<TaskManagement.TaskEntry> allTasks = taskManagement.loadTasks();
+                
+                if (taskIndex >= 0 && taskIndex < allTasks.size()) {
+                    String newStatus = (String) detailModel.getValueAt(rowIdx, 5);
+                    allTasks.get(taskIndex).status = newStatus;
+                    taskManagement.saveTasks(allTasks);
+                    loadData();  // Refresh main table
+                }
+            }
+        }
+    });
+
+    JDialog dialog = new JDialog(
+            SwingUtilities.getWindowAncestor(this),
+            "Tasks for " + employee,
+            Dialog.ModalityType.APPLICATION_MODAL);
+    dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+    dialog.setSize(800, 400);
+    dialog.setLocationRelativeTo(this);
+    dialog.setLayout(new BorderLayout());
+    dialog.add(scrollPane, BorderLayout.CENTER);
+
+    // --- Buttons at bottom: Delete + Close ---
+    JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+    JButton deleteButton = new JButton("Delete Selected Task");
+    JButton closeButton = new JButton("Close");
+
+    // Delete logic
+    deleteButton.addActionListener(e -> {
+        int selectedRow = detailTable.getSelectedRow();
+        if (selectedRow < 0) {
             JOptionPane.showMessageDialog(
-                    this,
-                    "Please select an employee row first.",
+                    dialog,
+                    "Please select a task to delete.",
                     "No Selection",
                     JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        String employee = (String) model.getValueAt(row, 0);
-        if (employee == null)
+        int confirm = JOptionPane.showConfirmDialog(
+                dialog,
+                "Are you sure you want to delete this task?",
+                "Confirm Delete",
+                JOptionPane.YES_NO_OPTION);
+
+        if (confirm != JOptionPane.YES_OPTION) {
             return;
-        String empKey = employee.trim();
+        }
 
-        DefaultTableModel detailModel = new DefaultTableModel(
-                new Object[] { "Employee", "Wage", "Task", "Deadline", "Priority", "Status" },
-                0);
+        // Load all tasks, remove the one at the mapped index, save back.
+        List<TaskManagement.TaskEntry> allTasks = taskManagement.loadTasks();
+        int idx = rowToIndex.get(selectedRow);
 
-        JTable detailTable = new JTable(detailModel);
-        detailTable.setRowHeight(22);
-        JScrollPane scrollPane = new JScrollPane(detailTable);
-
-        // Mapping: detail row index -> index in full task list
-        java.util.List<Integer> rowToIndex = new ArrayList<>();
-        populateEmployeeTasks(empKey, detailModel, rowToIndex);
-
-        JDialog dialog = new JDialog(
-                SwingUtilities.getWindowAncestor(this),
-                "Tasks for " + employee,
-                Dialog.ModalityType.APPLICATION_MODAL);
-        dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-        dialog.setSize(800, 400);
-        dialog.setLocationRelativeTo(this);
-        dialog.setLayout(new BorderLayout());
-        dialog.add(scrollPane, BorderLayout.CENTER);
-
-        // --- Buttons at bottom: Delete + Close ---
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        JButton deleteButton = new JButton("Delete Selected Task");
-        JButton closeButton = new JButton("Close");
-
-        // Delete logic
-        deleteButton.addActionListener(e -> {
-            int selectedRow = detailTable.getSelectedRow();
-            if (selectedRow < 0) {
-                JOptionPane.showMessageDialog(
-                        dialog,
-                        "Please select a task to delete.",
-                        "No Selection",
-                        JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-
-            int confirm = JOptionPane.showConfirmDialog(
+        if (idx < 0 || idx >= allTasks.size()) {
+            // Just a sanity check
+            JOptionPane.showMessageDialog(
                     dialog,
-                    "Are you sure you want to delete this task?",
-                    "Confirm Delete",
-                    JOptionPane.YES_NO_OPTION);
+                    "Unable to delete the selected task (index out of range).",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
 
-            if (confirm != JOptionPane.YES_OPTION) {
-                return;
-            }
+        allTasks.remove(idx);
+        taskManagement.saveTasks(allTasks);
 
-            // Load all tasks, remove the one at the mapped index, save back.
-            List<TaskManagement.TaskEntry> allTasks = taskManagement.loadTasks();
-            int idx = rowToIndex.get(selectedRow);
+        // Refresh main summary table
+        loadData();
 
-            if (idx < 0 || idx >= allTasks.size()) {
-                // Just a sanity check
-                JOptionPane.showMessageDialog(
-                        dialog,
-                        "Unable to delete the selected task (index out of range).",
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE);
-                return;
-            }
+        // Rebuild detail table & mappings for further deletions
+        populateEmployeeTasks(empKey, detailModel, rowToIndex);
+    });
 
-            allTasks.remove(idx);
-            taskManagement.saveTasks(allTasks);
+    closeButton.addActionListener(e -> dialog.dispose());
 
-            // Refresh main summary table
-            loadData();
+    buttonPanel.add(deleteButton);
+    buttonPanel.add(closeButton);
+    dialog.add(buttonPanel, BorderLayout.SOUTH);
 
-            // Rebuild detail table & mappings for further deletions
-            populateEmployeeTasks(empKey, detailModel, rowToIndex);
-        });
-
-        closeButton.addActionListener(e -> dialog.dispose());
-
-        buttonPanel.add(deleteButton);
-        buttonPanel.add(closeButton);
-        dialog.add(buttonPanel, BorderLayout.SOUTH);
-
-        dialog.setVisible(true);
-    }
+    dialog.setVisible(true);
 }
+}
+

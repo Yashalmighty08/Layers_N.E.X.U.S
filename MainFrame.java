@@ -59,7 +59,7 @@ public class MainFrame extends JFrame {
 
         // Always available tabs
         JPanel homePanel = createHomePanel();
-        JPanel taskAlertsPanel = createPanel("Task Alerts & Notifications");
+        JPanel taskAlertsPanel = createAlertPanel();
         JPanel orderApplicationPanel = createOrderPanel();
         // Add always available tabs
         tabbedPane.addTab("Home", homePanel);
@@ -99,14 +99,16 @@ public class MainFrame extends JFrame {
     private JPanel createReportPanel() {
         ReportingPanel reportPanel = new ReportingPanel();
         return reportPanel; 
-}
+    }
+    private JPanel createAlertPanel() {
+        return new AlertsPanel(currentUser);
+    }
     
     private JPanel createRecipePanel() {
         // Create an instance of RecipeManagementSystem and get its content
         RecipeManagementSystem recipeSystem = new RecipeManagementSystem();
         JPanel recipePanel = (JPanel) recipeSystem.getContentPane();
-        
-        // Optional: Customize the panel if needed
+
         recipePanel.setName("Recipe Management");
         
         return recipePanel;

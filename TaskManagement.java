@@ -171,7 +171,7 @@ private Map<String, String> loadWages() {
     return wageMap;
 }
     
-private List<TaskEntry> loadExistingTasks() {
+public List<TaskEntry> loadExistingTasks() {
     List<TaskEntry> list = new ArrayList<>();
     Map<String, String> wageMap = loadWages();
 
