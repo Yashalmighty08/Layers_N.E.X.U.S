@@ -26,6 +26,17 @@ public class ReportSystem {
         }
     }
 
+    private String extractEmployeeName(String employeeField) {
+        if (employeeField == null) return "";
+        
+        String trimmed = employeeField.trim();
+        if (trimmed.contains(" ")) {
+            // Extract just the first part (before first whitespace)
+            return trimmed.split("\\s+")[0];
+        }
+        return trimmed;
+    }
+
     public List<ReportRow> generateReport() {
 
         Map<String, ReportRow> summary = new HashMap<>();
@@ -39,9 +50,11 @@ public class ReportSystem {
                 if (arr.length < 6)
                     continue;
 
-                String employee = arr[0].trim();
+                String employee = extractEmployeeName(arr[0]);
                 String statusRaw = arr[5].trim().toLowerCase();
                 statusRaw = statusRaw.replaceAll("\\s+", ""); // remove all space characters
+
+                 if (employee.isEmpty()) continue;
 
                 summary.putIfAbsent(employee, new ReportRow(employee));
                 ReportRow row = summary.get(employee);
