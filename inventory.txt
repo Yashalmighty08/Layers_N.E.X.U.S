@@ -1,0 +1,19 @@
+Ingredient Name,Current Stock,Low Stock Threshold
+baking soda,10,2
+banana,20,10
+brown sugar,30,5
+butter,20,5
+caramel,500,20
+chocolate chips,200,20
+coffee powder,20,10
+corn starch,200,10
+eggs,24,6
+flour,2000,10
+oats,80,10
+peanut butter,40,5
+raisins,60,10
+salt,20,5
+strawberry,200,10
+sugar,50,10
+vanilla,15,3
+whipped cream,0,10

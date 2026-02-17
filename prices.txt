@@ -1,0 +1,13 @@
+Product,Price
+Chocolate Chip Cookie,200.00
+Oatmeal Raisin Cookie,0.00
+Peanut Butter Cookie,0.00
+Sugar Cookie,0.00
+Choclate macadamia cookies,0.00
+Strawberry cookie,0.00
+banana cookie,0.00
+Chocolate Macadamia Cookies,0.00
+Strawberry Cookie,0.00
+Banana Cookie,0.00
+Oat Cookie,0.00
+Calamel Cookie,0.00

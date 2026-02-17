@@ -1,0 +1,24 @@
+Yash,20.00,Prepare chocolate chip cookies batch,2025-12-10,Medium,Pending!
+Yash,20.00,Clean baking equipment,2025-12-11,Low,In Progress
+Yash,20.00,Inventory restocking check,2025-12-12,High,Pending!
+Yash,20.00,Prepare weekly sales report,2025-12-13,Medium,Completed
+cheznay,18.50,Bake oatmeal raisin cookies,2025-12-10,High,Pending!
+cheznay,18.50,Organize ingredient storage,2025-12-11,Medium,In Progress
+cheznay,18.50,Quality check baked goods,2025-12-12,Medium,Pending!
+cheznay,18.50,Update customer feedback log,2025-12-13,Low,Completed
+rommona,19.75,Prepare sugar cookie dough,2025-12-10,Medium,Pending!
+rommona,19.75,Decorate holiday cookies,2025-12-11,High,In Progress
+rommona,19.75,Clean display area,2025-12-12,Low,Pending!
+rommona,19.75,Prepare marketing materials,2025-12-13,Medium,Completed
+jordan,21.00,Bake peanut butter cookies,2025-12-10,High,Pending!
+jordan,21.00,Check oven temperatures,2025-12-11,Medium,In Progress
+jordan,21.00,Prepare packaging materials,2025-12-12,Low,Pending!
+jordan,21.00,Update recipe database,2025-12-13,Medium,Completed
+jonathon,22.00,Make double chocolate cookies,2025-12-10,High,Pending!
+jonathon,22.00,Manage online orders,2025-12-11,High,In Progress
+jonathon,22.00,Coordinate with suppliers,2025-12-12,Medium,Pending!
+jonathon,22.00,Prepare financial summary,2025-12-13,Medium,Completed
+Janae,25.00,Review employee schedules,2025-12-10,High,Pending!
+Janae,25.00,Approve inventory orders,2025-12-11,High,In Progress
+Janae,25.00,Conduct team meeting,2025-12-12,Medium,Pending!
+Janae,25.00,Prepare monthly budget report,2025-12-13,High,Completed
